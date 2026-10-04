@@ -1,5 +1,17 @@
 <script setup lang= "ts">
-    
+
+import { ref } from "vue";
+
+const isSpinning = ref(false);
+
+const spin = () => {
+    isSpinning.value = true;
+
+    setTimeout(() => {
+        isSpinning.value = false;
+    }, 2000);
+};
+
 </script>
 
 <template>
@@ -13,7 +25,10 @@
                 Spin
             </div>
 
-            <div class="wheel">
+            <div 
+            class="wheel"
+            :class="{ spinning: isSpinning }"
+            @click="spin"
             </div>
 
         </div>
@@ -26,6 +41,8 @@
 </template>
 
 <style>
+
+
 body {
     margin: 0;
     background-color: #f2f2f2;
@@ -84,6 +101,23 @@ h1 {
     );
 
     border: 1px solid black;
+    
+    cursor: pointer;
+}
+
+/* spinning */
+.spinning {
+    animation: spin 2s ease-out;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(1440deg);
+    }
 }
 
 /* Deck button */
@@ -105,5 +139,10 @@ h1 {
 .deck-button:hover {
     background-color: #eeeeee;
 }
+
+
+
+
 </style>
+
 
