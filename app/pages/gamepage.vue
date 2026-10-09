@@ -25,7 +25,7 @@ const spin = () => {
                 Spin
             </div>
 
-            <div 
+            <div> 
             class="wheel"
             :class="{ spinning: isSpinning }"
             @click="spin"
