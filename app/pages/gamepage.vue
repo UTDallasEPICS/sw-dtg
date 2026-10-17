@@ -14,31 +14,8 @@ const spin = () => {
 
 </script>
 
-<!-- <template>
-    <div class="game">
 
-        <h1>Stronger Twister</h1>
 
-        <div class="spin-card">
-
-            <div class="spin-text">
-                Spin
-            </div>
-
-            <div> 
-            class="wheel"
-            :class="{ spinning: isSpinning }"
-            @click="spin"
-            </div>
-
-        </div>
-
-        <button class="deck-button">
-            Deck!
-        </button>
-
-    </div>
-</template> -->
 <template>
     <div class="game">
 
