@@ -23,7 +23,9 @@
       </div>
 
       <div class="start-game-section">
-        <button class="start-game-button">Start Session</button>
+        <NuxtLink :to="`/lobby?pin=${gamePin}`">
+          <button class="start-game-button" :disabled="!gamePin">Start Session</button>
+        </NuxtLink>
       </div>
     </main>
   </div>
