@@ -13,6 +13,10 @@
     await navigateTo('/auth', { external: true })
   }
 
+  function goToHomepage() {
+    navigateTo('/homepage')
+  }
+
   function getImageLink(user: { image: boolean; id: string }) {
     return user.image ? 'api/users/' + user.id + '/profile' : undefined
   }
@@ -133,6 +137,13 @@
           icon="i-heroicons-arrow-right-on-rectangle-20-solid"
           label="Logout"
           @click="logout"
+        />
+        <UButton
+          color="primary"
+          variant="soft"
+          icon="i-heroicons-home-20-solid"
+          label="Homepage"
+          @click="goToHomepage"
         />
       </div>
     </div>
