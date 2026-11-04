@@ -1,17 +1,28 @@
-<script setup lang= "ts">
+<script setup lang="ts">
+  import { ref, onMounted } from 'vue'
+  const route = useRoute()
+  const pin = route.query.pin // Reads the forwarded PIN
+  const players = ref([])
 
-import { ref } from "vue";
+  const isSpinning = ref(false)
 
-const isSpinning = ref(false);
-
-const spin = () => {
-    isSpinning.value = true;
+  const spin = () => {
+    isSpinning.value = true
 
     setTimeout(() => {
-        isSpinning.value = false;
-    }, 2000);
-};
+      isSpinning.value = false
+    }, 2000)
+  }
 
+  function usePinAndPlayers() {
+    //$socket.emit('Start_Game', { pin: pin })
+    // navigateTo('.. have info stuff')
+    console.log('Pin Name:', pin, 'Players:', players.value)
+  }
+
+  onMounted(() => {
+    usePinAndPlayers()
+  })
 </script>
 
 <!-- <template>
@@ -40,56 +51,42 @@ const spin = () => {
     </div>
 </template> -->
 <template>
-    <div class="game">
+  <div class="game">
+    <h1>Stronger Twister</h1>
 
-        <h1>Stronger Twister</h1>
+    <div class="spin-card">
+      <div class="spin-text">Spin</div>
 
-        <div class="spin-card">
-
-            <div class="spin-text">
-                Spin
-            </div>
-
-            <div 
-                class="wheel"
-                :class="{ spinning: isSpinning }"
-                @click="spin"
-            ></div>
-
-        </div>
-
-        <button class="deck-button">
-            Deck!
-        </button>
-
+      <div class="wheel" :class="{ spinning: isSpinning }" @click="spin"></div>
     </div>
+
+    <button class="deck-button">Deck!</button>
+  </div>
 </template>
 
 <style>
-
-
-body {
+  body {
     margin: 0;
     background-color: #f2f2f2;
     font-family: Arial, sans-serif;
-}
+  }
 
-.game {
+  .game {
     width: 300px;
     margin: 30px auto;
     padding: 10px;
     background-color: #fffbd6;
     border-radius: 20px;
     text-align: center;
-}
+  }
 
-h1 {
+  h1 {
     font-size: 30px;
     margin: 0 0 25px 0;
-}
+  }
 
-/* White card */
-.spin-card {
+  /* White card */
+  .spin-card {
     width: 170px;
     height: 280px;
     margin: 0 auto 20px auto;
@@ -102,51 +99,51 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
+  }
 
-.spin-text {
+  .spin-text {
     font-size: 55px;
     font-weight: bold;
     margin-top: 15px;
     margin-bottom: 5px;
-}
+  }
 
-/* Color wheel */
-.wheel {
+  /* Color wheel */
+  .wheel {
     width: 145px;
     height: 145px;
 
     border-radius: 50%;
 
     background: conic-gradient(
-        #4d9bf5 0deg 90deg,
-        #f7f522 90deg 180deg,
-        #e52e32 180deg 270deg,
-        #7774d9 270deg 360deg
+      #4d9bf5 0deg 90deg,
+      #f7f522 90deg 180deg,
+      #e52e32 180deg 270deg,
+      #7774d9 270deg 360deg
     );
 
     border: 1px solid black;
-    
+
     cursor: pointer;
-}
+  }
 
-/* spinning */
-.spinning {
+  /* spinning */
+  .spinning {
     animation: spin 2s ease-out;
-}
+  }
 
-@keyframes spin {
+  @keyframes spin {
     from {
-        transform: rotate(0deg);
+      transform: rotate(0deg);
     }
 
     to {
-        transform: rotate(1440deg);
+      transform: rotate(1440deg);
     }
-}
+  }
 
-/* Deck button */
-.deck-button {
+  /* Deck button */
+  .deck-button {
     width: 210px;
     height: 115px;
 
@@ -159,15 +156,9 @@ h1 {
     font-weight: bold;
 
     cursor: pointer;
-}
+  }
 
-.deck-button:hover {
+  .deck-button:hover {
     background-color: #eeeeee;
-}
-
-
-
-
+  }
 </style>
-
-
