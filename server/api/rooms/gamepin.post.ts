@@ -4,6 +4,7 @@ export default defineEventHandler(() => {
     if (!activeRooms.has(gameCode)) {
       activeRooms.set(gameCode, {
         pin: gameCode,
+        hostSocketId: null,
         createdAt: Date.now(),
         status: 'LOBBY',
         players: [],
