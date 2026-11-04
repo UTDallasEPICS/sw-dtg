@@ -2,43 +2,32 @@
 
 import { ref } from "vue";
 
+type SpinnerColor = "blue" | "yellow" | "red" | "purple";
+
 const isSpinning = ref(false);
 
+const selectedColor = useState<SpinnerColor | null>(
+  "selectedColor",
+  () => null
+);
+
+const colors: SpinnerColor[] = ["blue", "yellow", "red", "purple"];
+
+//Selecting random color from the spinner
+
 const spin = () => {
+    if (isSpinning.value) return;
+
     isSpinning.value = true;
 
     setTimeout(() => {
+        const index = Math.floor(Math.random() * colors.length);
+        selectedColor.value = colors[index]!;
         isSpinning.value = false;
     }, 2000);
 };
-
 </script>
 
-<!-- <template>
-    <div class="game">
-
-        <h1>Stronger Twister</h1>
-
-        <div class="spin-card">
-
-            <div class="spin-text">
-                Spin
-            </div>
-
-            <div> 
-            class="wheel"
-            :class="{ spinning: isSpinning }"
-            @click="spin"
-            </div>
-
-        </div>
-
-        <button class="deck-button">
-            Deck!
-        </button>
-
-    </div>
-</template> -->
 <template>
     <div class="game">
 
@@ -57,8 +46,15 @@ const spin = () => {
             ></div>
 
         </div>
+        <p v-if="selectedColor">
+            Selected color: {{ selectedColor }}
+        </p>
 
-        <button class="deck-button">
+        <button
+            class="deck-button"
+            :disabled="isSpinning || !selectedColor"
+            @click="navigateTo('/Cards')"
+        >
             Deck!
         </button>
 
