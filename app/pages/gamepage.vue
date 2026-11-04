@@ -28,6 +28,8 @@ const spin = () => {
 };
 </script>
 
+
+
 <template>
     <div class="game">
 
