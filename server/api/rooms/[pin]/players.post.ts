@@ -1,4 +1,4 @@
-import { activeRooms } from '~~/server/utils/rooms'
+import { activeRooms, type Player } from '~~/server/utils/rooms'
 
 const PIN_PATTERN = /^\d{6}$/
 const MAX_NAME_LENGTH = 30
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const duplicate = room.players.some((player) => player.toLowerCase() === name.toLowerCase())
+  const duplicate = room.players.some((player) => player.name.toLowerCase() === name.toLowerCase())
 
   if (duplicate) {
     throw createError({
@@ -81,13 +81,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  room.players.push(name)
+  const newPlayer: Player = {
+    id: crypto.randomUUID(),
+    name,
+    cardsRead: 0,
+  }
+
+  room.players.push(newPlayer)
 
   setResponseStatus(event, 201)
 
   return {
     pin: room.pin,
-    player: name,
+    player: newPlayer,
     players: [...room.players],
   }
 })

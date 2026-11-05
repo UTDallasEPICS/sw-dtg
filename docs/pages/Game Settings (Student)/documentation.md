@@ -60,8 +60,11 @@ Successful response — HTTP 201:
 ```json
 {
   "pin": "123456",
-  "player": "Alex",
-  "players": ["Alex", "Sam"]
+  "player": { "id": "2b7c...", "name": "Alex", "cardsRead": 0 },
+  "players": [
+    { "id": "2b7c...", "name": "Alex", "cardsRead": 0 },
+    { "id": "9f1a...", "name": "Sam", "cardsRead": 0 }
+  ]
 }
 ```
 
@@ -74,8 +77,8 @@ Server-side behavior:
 5. Reject the request if the room does not exist.
 6. Reject the request if the room status is not `LOBBY`.
 7. Reject duplicate names within the same room using a case-insensitive comparison.
-8. Append the validated name to the room's `players` array.
-9. Return the PIN, the registered player name, and the updated player list.
+8. Append a new `Player` object (`id`, `name`, `cardsRead`) to the room's `players` array.
+9. Return the PIN, the registered `Player`, and the updated player list.
 
 The client never modifies room state directly.
 
@@ -102,9 +105,11 @@ The client maps these codes to student-friendly messages such as "Game not found
 Rooms live in an in-memory `Map` (`activeRooms`) with the shape:
 
 - `pin`
+- `hostSocketId`
 - `createdAt`
 - `status` (`LOBBY`, `PLAYING`, or `FINISHED`)
-- `players` (student display names)
+- `players` (`Player[]`; each player has `id`, `name`, and `cardsRead`)
+- `currentPlayer` (optional turn index)
 
 Because the registry is in server RAM, rooms are lost when the server restarts and are not shared between multiple server instances. Persistent or distributed room storage is out of scope.
 
