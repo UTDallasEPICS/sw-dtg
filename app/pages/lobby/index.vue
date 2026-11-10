@@ -25,7 +25,7 @@
   onMounted(() => {
     // If no PIN was forwarded via query string, redirect back to session setup
     if (!pin.value) {
-      navigateTo('/setup')
+      navigateTo('/admin/setup')
       return
     }
 
@@ -51,55 +51,233 @@
 </script>
 
 <template>
-  <div class="screen-container">
-    <div>
-      <p v-if="pin" class="size">
+  <!-- Full-Screen Container: edge-to-edge butter yellow (#fffbd6) -->
+  <main class="lobby-container">
+    <!-- Header: Title & Room PIN -->
+    <header class="header-section">
+      <h1 class="game-title">Stronger Twister</h1>
+      <p v-if="pin" class="pin-badge">
         Room PIN: <strong>{{ pin }}</strong>
       </p>
-    </div>
+    </header>
 
-    <!-- Empty state when no players have entered the room yet -->
-    <div v-if="players.length === 0" class="empty-state">Waiting for players to join...</div>
+    <!-- Center Section: Dynamic list of student pills -->
+    <section class="students-section">
+      <!-- Empty state when no students have joined yet -->
+      <div v-if="players.length === 0" class="empty-state">
+        <p>Waiting for players to join...</p>
+      </div>
 
-    <!-- Real-time roster display -->
-    <ul class="player-grid">
-      <li v-for="player in players" :key="player.id" class="player-pill">
-        {{ player.name }}
-      </li>
-    </ul>
+      <!-- Scrollable list of joined students -->
+      <div v-else class="students-list">
+        <div v-for="player in players" :key="player.id" class="student-pill">
+          <span class="student-name">{{ player.name }}</span>
+        </div>
+      </div>
+    </section>
 
-    <!--
-      Notice: We don't wrap this button in <NuxtLink> because navigation should only occur
-      after the backend validates host authority and emits 'GAME_STARTED'.
-    -->
-    <button class="start-button" :disabled="players.length === 0" @click="startGame">
-      Start Game
-    </button>
-  </div>
+    <!-- Footer Action: Start Game Button -->
+    <footer class="action-section">
+      <button
+        class="start-game-btn"
+        :disabled="players.length === 0"
+        @click="startGame"
+      >
+        Start game!
+      </button>
+    </footer>
+  </main>
 </template>
 
 <style scoped>
-  .screen-container {
+  /* ==========================================================================
+     1. Full-Screen Page Container
+     Edge-to-edge butter yellow (#fffbd6) with no border fluff
+     ========================================================================== */
+  .lobby-container {
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #fffbd6; /* Signature butter yellow */
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
-    padding: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3rem 1.5rem 2.5rem 1.5rem;
+    box-sizing: border-box;
   }
 
-  .start-button {
-    margin-top: 1rem;
-    padding: 0.75rem 1.5rem;
+  /* ==========================================================================
+     2. Header Section: Title & Optional PIN badge
+     ========================================================================== */
+  .header-section {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .game-title {
+    font-size: 2.35rem;
+    font-weight: 800;
+    color: #111111;
+    margin: 0;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+
+  .pin-badge {
+    margin: 0.25rem 0 0 0;
     font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 8px;
-    align-self: flex-start;
+    font-weight: 600;
+    color: #4b5563;
   }
 
-  .start-button:disabled {
-    opacity: 0.5;
+  .pin-badge strong {
+    color: #1e3a8a;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+
+  /* ==========================================================================
+     3. Students List Section
+     Vertically stacked white rounded bars with soft purple-tinted student names
+     ========================================================================== */
+  .students-section {
+    width: 100%;
+    max-width: 320px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 1.5rem 0;
+    overflow-y: auto;
+  }
+
+  .empty-state {
+    font-size: 1.1rem;
+    color: #6b7280;
+    font-weight: 600;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .students-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  /* White capsule pill matching the reference design */
+  .student-pill {
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 9999px;
+    padding: 0.95rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .student-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Student name styled in gentle indigo/purple matching the mockup */
+  .student-name {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #7b78d4; /* Lilac/purple accent color from the mock */
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ==========================================================================
+     4. Footer Action Button Section ("Start game!")
+     Large rounded white button styled matching the design
+     ========================================================================== */
+  .action-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .start-game-btn {
+    width: 100%;
+    max-width: 290px;
+    background-color: #ffffff;
+    color: #111111;
+    font-size: 2rem;
+    font-weight: 800;
+    padding: 1.75rem 1.5rem;
+    border-radius: 36px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    text-align: center;
+  }
+
+  .start-game-btn:hover:not(:disabled) {
+    background-color: #fafafa;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .start-game-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .start-game-btn:disabled {
+    opacity: 0.45;
     cursor: not-allowed;
+  }
+
+  /* ==========================================================================
+     5. Desktop View (min-width: 768px)
+     Maintains the edge-to-edge clean full-screen look with proportional sizing
+     ========================================================================== */
+  @media (min-width: 768px) {
+    .lobby-container {
+      padding: 4rem 2rem 3.5rem 2rem;
+    }
+
+    .game-title {
+      font-size: 3rem;
+    }
+
+    .pin-badge {
+      font-size: 1.25rem;
+    }
+
+    .students-section {
+      max-width: 400px;
+      margin: 2rem 0;
+    }
+
+    .student-pill {
+      padding: 1.1rem 2rem;
+    }
+
+    .student-name {
+      font-size: 1.65rem;
+    }
+
+    .start-game-btn {
+      max-width: 340px;
+      font-size: 2.25rem;
+      padding: 2rem 1.75rem;
+      border-radius: 40px;
+    }
   }
 </style>
