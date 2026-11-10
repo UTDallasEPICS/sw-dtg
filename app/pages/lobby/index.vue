@@ -51,7 +51,6 @@
 </script>
 
 <template>
-  <!-- Full-Screen Container: edge-to-edge butter yellow (#fffbd6) -->
   <main class="lobby-container">
     <!-- Header: Title & Room PIN -->
     <header class="header-section">
@@ -78,11 +77,7 @@
 
     <!-- Footer Action: Start Game Button -->
     <footer class="action-section">
-      <button
-        class="start-game-btn"
-        :disabled="players.length === 0"
-        @click="startGame"
-      >
+      <button class="start-game-btn" :disabled="players.length === 0" @click="startGame">
         Start game!
       </button>
     </footer>
@@ -182,7 +177,9 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   .student-pill:hover {
@@ -223,7 +220,10 @@
     border: none;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
     text-align: center;
   }
 
