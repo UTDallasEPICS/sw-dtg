@@ -89,6 +89,15 @@ export default defineEventHandler(async (event) => {
 
   room.players.push(newPlayer)
 
+  // Notify all connected sockets in this room (such as the teacher's lobby) that a player joined
+  const socket = event.node.res.socket as unknown as {
+    server?: { io?: import('socket.io').Server }
+  }
+  const io = socket?.server?.io
+  if (io) {
+    io.to(pin).emit('ROSTER_UPDATE', room.players)
+  }
+
   setResponseStatus(event, 201)
 
   return {

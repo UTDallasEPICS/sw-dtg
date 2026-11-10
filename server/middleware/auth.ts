@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
     return
   }
 
+  // Allow unauthenticated students to join a room via POST /api/rooms/:pin/players
   if (event.method === 'POST' && PLAYER_REGISTRATION_PATH.test(pathname)) {
     return
   }
