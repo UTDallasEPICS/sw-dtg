@@ -17,5 +17,12 @@
     "**/.nuxt/**": true,
     "**/.output/**": true,
     "**/node_modules/**": true
-  }
+  },
+  "python-envs.pythonProjects": [
+    {
+      "path": "cs4375assignment.py",
+      "envManager": "ms-python.python:venv",
+      "packageManager": "ms-python.python:pip"
+    }
+  ]
 }

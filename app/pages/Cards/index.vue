@@ -26,12 +26,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 /*
  * QUESTION BANK
  */
 const questionBank = {
+  blue: [
+    {
+      question: "(Y/N) You notice your friend is being ‘text bombed’ by their partner - like they are becoming obsessed with their every move. Should you be concerned?",
+      answer: "Yes. These statements, 'I have tried everything to keep them happy, walking on eggshells' are said by the victims of abusive relationships.  Individuals will not say they are in an abusive relationship, but they will use these phrases to describe abuse that they are experiencing."
+    }
+  ],
+
   yellow: [
     {
       question: "(T/F) Abuse in relationships happens only because of anger.",
@@ -43,24 +50,10 @@ const questionBank = {
     }
   ],
 
-  green: [
-    {
-      question: "(T/F) It is easy to tell if someone is an abusive person?",
-      answer: "False. Many abusive people are very charming, well liked and wouldn't appear to be dangerous. Knowing relationship red flags and understanding the pattern of abusive relationships can keep you safe."
-    }
-  ],
-
   red: [
     {
       question: "(T/F) Only serious relationships experience abuse?",
       answer: "False. Whether you are in a long term, committed, or casual experience you can experience abuse.  Friendships and dating relationships can have abusive patterns. Learn red flags of unhealthy relationships."
-    }
-  ],
-
-  blue: [
-    {
-      question: "(Y/N) You notice your friend is being ‘text bombed’ by their partner - like they are becoming obsessed with their every move. Should you be concerned?",
-      answer: "Yes. These statements, 'I have tried everything to keep them happy, walking on eggshells' are said by the victims of abusive relationships.  Individuals will not say they are in an abusive relationship, but they will use these phrases to describe abuse that they are experiencing."
     }
   ],
 
@@ -76,8 +69,7 @@ const questionBank = {
 /*
  I just put yellow as a placeholder, once the spinner is finished, this is where the selected color will go.
  */
-const selectedColor = ref('yellow')
-
+const selectedColor = useState("selectedColor", () => null)
 
 /*
 This is whether the card is flipped or not. If the card is not flipped(false), then it's
@@ -100,24 +92,30 @@ Finds the selected card color, then looks into the question bank for Q/As corres
 selects one.
  */
 function getRandomCard() {
-  const cards = questionBank[selectedColor.value]
+  isFlipped.value = false
 
-  // Make sure there are questions for this color
-  if (!cards || cards.length === 0) {
+  if (!selectedColor.value) {
     currentCard.value = {
-      question: 'No questions available.',
-      answer: 'Please add questions to this color.'
+      question: 'Spin the wheel first to select a color.',
+      answer: 'Return to the game page and spin the wheel.'
     }
     return
   }
 
-  // Pick a random question
+  const cards = questionBank[selectedColor.value]
+
+  if (!cards || cards.length === 0) {
+    currentCard.value = {
+      question: 'No questions available for this color.',
+      answer: 'Please add questions to this color.'
+    }
+    return
+  }
+  //pick a random question
   const randomIndex = Math.floor(Math.random() * cards.length)
 
+  //always start a new card on the question side
   currentCard.value = cards[randomIndex]
-
-  // Always start a new card on the question side
-  isFlipped.value = false
 }
 
 
@@ -132,7 +130,7 @@ function flipCard() {
 /*
 load a card when the page opens
  */
-getRandomCard()
+watch(selectedColor, getRandomCard, { immediate: true })
 </script>
 
 <style scoped>
@@ -241,6 +239,15 @@ button {
   font-size: 16px;
   cursor: pointer;
 }
+
+/* button for user to move on */
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+
 </style>
 
 

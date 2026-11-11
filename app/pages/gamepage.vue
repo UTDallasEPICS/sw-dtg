@@ -2,12 +2,27 @@
 
 import { ref } from "vue";
 
+type SpinnerColor = "blue" | "yellow" | "red" | "purple";
+
 const isSpinning = ref(false);
 
+const selectedColor = useState<SpinnerColor | null>(
+  "selectedColor",
+  () => null
+);
+
+const colors: SpinnerColor[] = ["blue", "yellow", "red", "purple"];
+
+//Selecting random color from the spinner
+
 const spin = () => {
+    if (isSpinning.value) return;
+
     isSpinning.value = true;
 
     setTimeout(() => {
+        const index = Math.floor(Math.random() * colors.length);
+        selectedColor.value = colors[index]!;
         isSpinning.value = false;
     }, 2000);
 };
@@ -65,8 +80,15 @@ const spin = () => {
     </div>
 
         </div>
+        <p v-if="selectedColor">
+            Selected color: {{ selectedColor }}
+        </p>
 
-        <button class="deck-button">
+        <button
+            class="deck-button"
+            :disabled="isSpinning || !selectedColor"
+            @click="navigateTo('/Cards')"
+        >
             Deck!
         </button>
 
