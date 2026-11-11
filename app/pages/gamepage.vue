@@ -1,4 +1,4 @@
-<script setup lang= "ts">
+<!-- <script setup lang= "ts">
 
 import { ref } from "vue";
 
@@ -12,33 +12,36 @@ const spin = () => {
     }, 2000);
 };
 
+</script> -->
+                              
+<script setup lang="ts">
+  import { ref, onMounted } from 'vue'
+  const route = useRoute()
+  const pin = route.query.pin // Reads the forwarded PIN
+  const players = ref([])
+
+  const isSpinning = ref(false)
+
+  const spin = () => {
+    isSpinning.value = true
+
+    setTimeout(() => {
+      isSpinning.value = false
+    }, 2000)
+  }
+
+  function usePinAndPlayers() {
+    //$socket.emit('Start_Game', { pin: pin })
+    // navigateTo('.. have info stuff')
+    console.log('Pin Name:', pin, 'Players:', players.value)
+  }
+
+  onMounted(() => {
+    usePinAndPlayers()
+  })
 </script>
 
-<!-- <template>
-    <div class="game">
 
-        <h1>Stronger Twister</h1>
-
-        <div class="spin-card">
-
-            <div class="spin-text">
-                Spin
-            </div>
-
-            <div> 
-            class="wheel"
-            :class="{ spinning: isSpinning }"
-            @click="spin"
-            </div>
-
-        </div>
-
-        <button class="deck-button">
-            Deck!
-        </button>
-
-    </div>
-</template> -->
 <template>
     <div class="game">
 
@@ -50,11 +53,16 @@ const spin = () => {
                 Spin
             </div>
 
-            <div 
+            <div class="wheel-container" @click="spin">
+
+            <div
                 class="wheel"
                 :class="{ spinning: isSpinning }"
-                @click="spin"
             ></div>
+
+        <div class="pointer"></div>
+
+    </div>
 
         </div>
 
@@ -110,7 +118,13 @@ h1 {
     margin-top: 15px;
     margin-bottom: 5px;
 }
-
+/* Pointer */
+.wheel-container {
+    position: relative;
+    width: 145px;
+    height: 145px;
+    cursor: pointer;
+}
 /* Color wheel */
 .wheel {
     width: 145px;
@@ -126,10 +140,41 @@ h1 {
     );
 
     border: 1px solid black;
+}
+/* .wheel {
+    width: 145px;
+    height: 145px;
+
+    border-radius: 50%;
+
+    background: conic-gradient(
+        #4d9bf5 0deg 90deg,
+        #f7f522 90deg 180deg,
+        #e52e32 180deg 270deg,
+        #7774d9 270deg 360deg
+    );
+
+    border: 1px solid black;
     
     cursor: pointer;
-}
+} */
+.pointer {
+    position: absolute;
 
+    top: 0;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 0;
+    height: 0;
+
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 16px solid black;
+
+    z-index: 10;
+}
 /* spinning */
 .spinning {
     animation: spin 2s ease-out;
