@@ -1,32 +1,51 @@
 <template>
   <div class="card-page">
-
     <div
       class="card-container"
       :class="{ flipped: isFlipped }"
       @click="flipCard"
     >
       <div class="card" :class="selectedColor">
-
-        <!-- Front -->
-        <div class="card-front">
+        <div class="card-front" :aria-hidden="isFlipped">
+          <button
+            type="button"
+            class="close-card"
+            aria-label="Close card and return to the spinner"
+            :tabindex="isFlipped ? -1 : 0"
+            @click.stop="closeCard"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
           <h2>Question</h2>
           <p>{{ currentCard.question }}</p>
         </div>
 
-        <div class="card-back">
+        <div class="card-back" :aria-hidden="!isFlipped">
+          <button
+            type="button"
+            class="close-card"
+            aria-label="Close card and return to the spinner"
+            :tabindex="isFlipped ? 0 : -1"
+            @click.stop="closeCard"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
           <h2>Answer</h2>
           <p>{{ currentCard.answer }}</p>
         </div>
-
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+
+function closeCard() {
+  isFlipped.value = false
+  selectedColor.value = null
+  return navigateTo('/gamepage')
+}
 
 /*
  * QUESTION BANK
@@ -35,6 +54,10 @@ const questionBank = {
   blue: [
     {
       question: "(Y/N) You notice your friend is being ‘text bombed’ by their partner - like they are becoming obsessed with their every move. Should you be concerned?",
+      answer: "Yes.Isolation is a key factor in abusive relationships and is patterns seen over a period of time. Isolated incidents of wanting more time together can be discussed in healthy relationships through communication. If they cannot be resolved with communication the abusive partner may argue, threaten, cause fear or manipulate to get the other person to comply."
+    },
+    {
+      question: "(Y/N) Should you be concerned? Your friend says to you, 'You know, I'm just trying to keep them happy, I feel like I'm walking on eggshells, but you know how they are.'",
       answer: "Yes. These statements, 'I have tried everything to keep them happy, walking on eggshells' are said by the victims of abusive relationships.  Individuals will not say they are in an abusive relationship, but they will use these phrases to describe abuse that they are experiencing."
     }
   ],
@@ -139,6 +162,44 @@ watch(selectedColor, getRandomCard, { immediate: true })
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  background-color: fffbd6
+}
+.card-wrapper {
+  position: relative;
+}
+
+.close-card {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0; /* Overrides the general button padding */
+  border: 0;
+  border-radius: 50%;
+
+  background: white;
+  color: #222;
+  cursor: pointer;
+}
+
+.close-card span {
+  font-family: Arial, sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.close-card:hover {
+  background: #eee;
+}
+
+.close-card:focus-visible {
+  outline: 3px solid #cc1a1a;
+  outline-offset: 2px;
 }
 
 .card-container {

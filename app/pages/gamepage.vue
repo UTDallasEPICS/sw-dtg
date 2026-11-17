@@ -15,19 +15,35 @@ const colors: SpinnerColor[] = ["blue", "yellow", "red", "purple"];
 
 //Selecting random color from the spinner
 
+const rotation = ref(0)
+const spinDuration = 2000
+
 const spin = () => {
-    if (isSpinning.value) return;
+  if (isSpinning.value) return
 
-    isSpinning.value = true;
+  isSpinning.value = true
+  selectedColor.value = null
 
-    setTimeout(() => {
-        const index = Math.floor(Math.random() * colors.length);
-        selectedColor.value = colors[index]!;
-        isSpinning.value = false;
-    }, 2000);
+  const index = Math.floor(Math.random() * colors.length)
+  const color = colors[index]!
+
+  // Each slice is 90° wide. Its center is 45°, 135°, 225°, or 315°.
+  const sliceCenter = index * 90 + 45
+
+  // Rotate the chosen slice's center to the pointer at the top.
+  const targetAngle = (360 - sliceCenter) % 360
+  const currentAngle = rotation.value % 360
+  const extraDegrees = (targetAngle - currentAngle + 360) % 360
+
+  rotation.value += 4 * 360 + extraDegrees
+
+  setTimeout(() => {
+    selectedColor.value = color
+    isSpinning.value = false
+  }, spinDuration)
 };
-</script>
 
+</script>
 
 
 <template>
@@ -40,13 +56,21 @@ const spin = () => {
             <div class="spin-text">
                 Spin
             </div>
+            <div class="wheel-container">
+                <div class="pointer" aria-hidden="true"></div>
 
-            <div 
-                class="wheel"
-                :class="{ spinning: isSpinning }"
-                @click="spin"
-            ></div>
-
+                <button
+                    type="button"
+                    class="wheel"
+                    aria-label="Spin the wheel"
+                    :disabled="isSpinning"
+                    :style="{
+                        transform: `rotate(${rotation}deg)`,
+                        transitionDuration: `${spinDuration}ms`
+                    }"
+                    @click="spin"
+                ></button>
+            </div>
         </div>
         <p v-if="selectedColor">
             Selected color: {{ selectedColor }}
@@ -64,8 +88,6 @@ const spin = () => {
 </template>
 
 <style>
-
-
 body {
     margin: 0;
     background-color: #f2f2f2;
@@ -109,12 +131,23 @@ h1 {
     margin-bottom: 5px;
 }
 
-/* Color wheel */
-.wheel {
+/* Pointer */
+.wheel-container {
+    position: relative;
     width: 145px;
     height: 145px;
+}
 
+/* Color wheel */
+.wheel {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 1px solid black;
     border-radius: 50%;
+    cursor: pointer;
 
     background: conic-gradient(
         #4d9bf5 0deg 90deg,
@@ -123,11 +156,24 @@ h1 {
         #7774d9 270deg 360deg
     );
 
-    border: 1px solid black;
-    
-    cursor: pointer;
+    transition-property: transform;
+    transition-timing-function: ease-out;
 }
+/* Pointer */
+.pointer {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    pointer-events: none;
 
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 16px solid black;
+}
 /* spinning */
 .spinning {
     animation: spin 2s ease-out;
@@ -142,6 +188,15 @@ h1 {
         transform: rotate(1440deg);
     }
 }
+
+/* Pointer */
+.wheel-container {
+    position: relative;
+    width: 145px;
+    height: 145px;
+    cursor: pointer;
+}
+
 
 /* Deck button */
 .deck-button {
@@ -162,9 +217,6 @@ h1 {
 .deck-button:hover {
     background-color: #eeeeee;
 }
-
-
-
 
 </style>
 
