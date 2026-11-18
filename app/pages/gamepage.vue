@@ -4,8 +4,6 @@
   const pin = route.query.pin // Reads the forwarded PIN
   const players = ref([])
 
-  const isSpinning = ref(false)
-
 type SpinnerColor = "blue" | "yellow" | "red" | "purple";
 
 const isSpinning = ref(false);
