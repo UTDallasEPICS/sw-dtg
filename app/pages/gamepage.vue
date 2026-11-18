@@ -1,66 +1,7 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
   const route = useRoute()
   const pin = route.query.pin // Reads the forwarded PIN
   const players = ref([])
-
-type SpinnerColor = "blue" | "yellow" | "red" | "purple";
-
-const isSpinning = ref(false);
-
-const selectedColor = useState<SpinnerColor | null>(
-  "selectedColor",
-  () => null
-);
-
-const colors: SpinnerColor[] = ["blue", "yellow", "red", "purple"];
-
-//Selecting random color from the spinner
-
-const rotation = ref(0)
-const spinDuration = 2000
-
-const spin = () => {
-  if (isSpinning.value) return
-
-  isSpinning.value = true
-  selectedColor.value = null
-
-  const index = Math.floor(Math.random() * colors.length)
-  const color = colors[index]!
-
-  // Each slice is 90° wide. Its center is 45°, 135°, 225°, or 315°.
-  const sliceCenter = index * 90 + 45
-
-  // Rotate the chosen slice's center to the pointer at the top.
-  const targetAngle = (360 - sliceCenter) % 360
-  const currentAngle = rotation.value % 360
-  const extraDegrees = (targetAngle - currentAngle + 360) % 360
-
-  rotation.value += 4 * 360 + extraDegrees
-
-  setTimeout(() => {
-    selectedColor.value = color
-    isSpinning.value = false
-  }, spinDuration)
-};
-
-</script> -->
-                              
-<script setup lang="ts">
-  const route = useRoute()
-  const pin = route.query.pin // Reads the forwarded PIN
-  const players = ref([])
-
-  const isSpinning = ref(false)
-
-  const spin = () => {
-    isSpinning.value = true
-
-    setTimeout(() => {
-      isSpinning.value = false
-    }, 2000)
-  }
 
   function usePinAndPlayers() {
     //$socket.emit('Start_Game', { pin: pin })
@@ -71,6 +12,44 @@ const spin = () => {
   onMounted(() => {
     usePinAndPlayers()
   })
+
+  type SpinnerColor = 'blue' | 'yellow' | 'red' | 'purple'
+
+  const isSpinning = ref(false)
+
+  const selectedColor = useState<SpinnerColor | null>('selectedColor', () => null)
+
+  const colors: SpinnerColor[] = ['blue', 'yellow', 'red', 'purple']
+
+  //Selecting random color from the spinner
+
+  const rotation = ref(0)
+  const spinDuration = 2000
+
+  const spin = () => {
+    if (isSpinning.value) return
+
+    isSpinning.value = true
+    selectedColor.value = null
+
+    const index = Math.floor(Math.random() * colors.length)
+    const color = colors[index]!
+
+    // Each slice is 90° wide. Its center is 45°, 135°, 225°, or 315°.
+    const sliceCenter = index * 90 + 45
+
+    // Rotate the chosen slice's center to the pointer at the top.
+    const targetAngle = (360 - sliceCenter) % 360
+    const currentAngle = rotation.value % 360
+    const extraDegrees = (targetAngle - currentAngle + 360) % 360
+
+    rotation.value += 4 * 360 + extraDegrees
+
+    setTimeout(() => {
+      selectedColor.value = color
+      isSpinning.value = false
+    }, spinDuration)
+  }
 </script>
 
 <template>
@@ -78,9 +57,7 @@ const spin = () => {
     <h1>Stronger Twister</h1>
 
     <div class="spin-card">
-      <div class="spin-text">
-        Spin
-      </div>
+      <div class="spin-text">Spin</div>
 
       <div class="wheel-container">
         <div class="pointer" aria-hidden="true"></div>
@@ -92,16 +69,14 @@ const spin = () => {
           :disabled="isSpinning"
           :style="{
             transform: `rotate(${rotation}deg)`,
-            transitionDuration: `${spinDuration}ms`
+            transitionDuration: `${spinDuration}ms`,
           }"
           @click="spin"
         ></button>
       </div>
     </div>
 
-    <p v-if="selectedColor">
-      Selected color: {{ selectedColor }}
-    </p>
+    <p v-if="selectedColor">Selected color: {{ selectedColor }}</p>
 
     <button
       class="deck-button"
@@ -114,7 +89,7 @@ const spin = () => {
 </template>
 
 <style>
-body {
+  body {
     margin: 0;
     background-color: #f2f2f2;
     font-family: Arial, sans-serif;
@@ -157,15 +132,15 @@ body {
     margin-bottom: 5px;
   }
 
-/* Pointer */
-.wheel-container {
+  /* Pointer */
+  .wheel-container {
     position: relative;
     width: 145px;
     height: 145px;
-}
+  }
 
-/* Color wheel */
-.wheel {
+  /* Color wheel */
+  .wheel {
     display: block;
     box-sizing: border-box;
     width: 100%;
@@ -181,11 +156,11 @@ body {
       #e52e32 180deg 270deg,
       #7774d9 270deg 360deg
     );
-      transition-property: transform;
+    transition-property: transform;
     transition-timing-function: ease-out;
-}
-/* Pointer */
-.pointer {
+  }
+  /* Pointer */
+  .pointer {
     position: absolute;
     top: -8px;
     left: 50%;
@@ -198,7 +173,7 @@ body {
     border-left: 9px solid transparent;
     border-right: 9px solid transparent;
     border-top: 16px solid black;
-}
+  }
 
   /* spinning */
   .spinning {
@@ -215,17 +190,16 @@ body {
     }
   }
 
-/* Pointer */
-.wheel-container {
+  /* Pointer */
+  .wheel-container {
     position: relative;
     width: 145px;
     height: 145px;
     cursor: pointer;
-}
+  }
 
-
-/* Deck button */
-.deck-button {
+  /* Deck button */
+  .deck-button {
     width: 210px;
     height: 115px;
 
@@ -242,6 +216,5 @@ body {
 
   .deck-button:hover {
     background-color: #eeeeee;
-}
-
+  }
 </style>
