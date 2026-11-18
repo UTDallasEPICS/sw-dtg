@@ -50,7 +50,6 @@ const spin = () => {
 </script> -->
                               
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
   const route = useRoute()
   const pin = route.query.pin // Reads the forwarded PIN
   const players = ref([])
@@ -76,49 +75,43 @@ const spin = () => {
   })
 </script>
 
-
 <template>
-    <div class="game">
+  <div class="game">
+    <h1>Stronger Twister</h1>
 
-        <h1>Stronger Twister</h1>
+    <div class="spin-card">
+      <div class="spin-text">
+        Spin
+      </div>
 
-        <div class="spin-card">
-
-            <div class="spin-text">
-                Spin
-            </div>
-            <div class="wheel-container">
-                <div class="pointer" aria-hidden="true"></div>
-
-                <button
-                    type="button"
-                    class="wheel"
-                    aria-label="Spin the wheel"
-                    :disabled="isSpinning"
-                    :style="{
-                        transform: `rotate(${rotation}deg)`,
-                        transitionDuration: `${spinDuration}ms`
-                    }"
-                    @click="spin"
-                ></button>
-            </div>
-        </div>
-        <p v-if="selectedColor">
-            Selected color: {{ selectedColor }}
-        </p>
+      <div class="wheel-container">
+        <div class="pointer" aria-hidden="true"></div>
 
         <button
-            class="deck-button"
-            :disabled="isSpinning || !selectedColor"
-            @click="navigateTo('/Cards')"
-        >
-            Deck!
-        </button>
-
-      <div class="wheel" :class="{ spinning: isSpinning }" @click="spin"></div>
+          type="button"
+          class="wheel"
+          aria-label="Spin the wheel"
+          :disabled="isSpinning"
+          :style="{
+            transform: `rotate(${rotation}deg)`,
+            transitionDuration: `${spinDuration}ms`
+          }"
+          @click="spin"
+        ></button>
+      </div>
     </div>
 
-    <button class="deck-button">Deck!</button>
+    <p v-if="selectedColor">
+      Selected color: {{ selectedColor }}
+    </p>
+
+    <button
+      class="deck-button"
+      :disabled="isSpinning || !selectedColor"
+      @click="navigateTo('/Cards')"
+    >
+      Deck!
+    </button>
   </div>
 </template>
 
