@@ -1,6 +1,10 @@
-<!-- <script setup lang= "ts">
+<script setup lang="ts">
+  import { ref, onMounted } from 'vue'
+  const route = useRoute()
+  const pin = route.query.pin // Reads the forwarded PIN
+  const players = ref([])
 
-import { ref } from "vue";
+  const isSpinning = ref(false)
 
 type SpinnerColor = "blue" | "yellow" | "red" | "purple";
 
@@ -111,7 +115,11 @@ const spin = () => {
             Deck!
         </button>
 
+      <div class="wheel" :class="{ spinning: isSpinning }" @click="spin"></div>
     </div>
+
+    <button class="deck-button">Deck!</button>
+  </div>
 </template>
 
 <style>
@@ -119,24 +127,24 @@ body {
     margin: 0;
     background-color: #f2f2f2;
     font-family: Arial, sans-serif;
-}
+  }
 
-.game {
+  .game {
     width: 300px;
     margin: 30px auto;
     padding: 10px;
     background-color: #fffbd6;
     border-radius: 20px;
     text-align: center;
-}
+  }
 
-h1 {
+  h1 {
     font-size: 30px;
     margin: 0 0 25px 0;
-}
+  }
 
-/* White card */
-.spin-card {
+  /* White card */
+  .spin-card {
     width: 170px;
     height: 280px;
     margin: 0 auto 20px auto;
@@ -149,14 +157,14 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
+  }
 
-.spin-text {
+  .spin-text {
     font-size: 55px;
     font-weight: bold;
     margin-top: 15px;
     margin-bottom: 5px;
-}
+  }
 
 /* Pointer */
 .wheel-container {
@@ -177,13 +185,12 @@ h1 {
     cursor: pointer;
 
     background: conic-gradient(
-        #4d9bf5 0deg 90deg,
-        #f7f522 90deg 180deg,
-        #e52e32 180deg 270deg,
-        #7774d9 270deg 360deg
+      #4d9bf5 0deg 90deg,
+      #f7f522 90deg 180deg,
+      #e52e32 180deg 270deg,
+      #7774d9 270deg 360deg
     );
-
-    transition-property: transform;
+      transition-property: transform;
     transition-timing-function: ease-out;
 }
 /* Pointer */
@@ -201,20 +208,21 @@ h1 {
     border-right: 9px solid transparent;
     border-top: 16px solid black;
 }
-/* spinning */
-.spinning {
-    animation: spin 2s ease-out;
-}
 
-@keyframes spin {
+  /* spinning */
+  .spinning {
+    animation: spin 2s ease-out;
+  }
+
+  @keyframes spin {
     from {
-        transform: rotate(0deg);
+      transform: rotate(0deg);
     }
 
     to {
-        transform: rotate(1440deg);
+      transform: rotate(1440deg);
     }
-}
+  }
 
 /* Pointer */
 .wheel-container {
@@ -239,12 +247,10 @@ h1 {
     font-weight: bold;
 
     cursor: pointer;
-}
+  }
 
-.deck-button:hover {
+  .deck-button:hover {
     background-color: #eeeeee;
 }
 
 </style>
-
-

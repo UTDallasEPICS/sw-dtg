@@ -1,5 +1,11 @@
 <script setup lang="ts">
   const colorMode = useColorMode()
+  const route = useRoute()
+
+  // Hide the global template header on full-screen game pages
+  const isFullScreenGamePage = computed(() => {
+    return route.path === '/admin/setup'
+  })
 
   const isDark = computed({
     get() {
@@ -16,7 +22,9 @@
     <div
       class="flex min-h-screen flex-col bg-white text-gray-900 transition-colors duration-300 dark:bg-gray-900 dark:text-gray-100"
     >
+      <!-- <Global Template Header (hidden on full-screen pages like /admin/setup) -->
       <header
+        v-if="!isFullScreenGamePage"
         class="sticky top-0 z-50 border-b border-gray-200 bg-white/75 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/75"
       >
         <UContainer class="flex h-16 items-center justify-between">
@@ -37,6 +45,7 @@
         </UContainer>
       </header>
 
+      <!-- Main Page View -->
       <main class="flex-1">
         <NuxtPage />
       </main>
