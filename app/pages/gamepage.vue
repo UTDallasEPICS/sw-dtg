@@ -4,6 +4,54 @@
   const pin = route.query.pin // Reads the forwarded PIN
   const players = ref([])
 
+type SpinnerColor = "blue" | "yellow" | "red" | "purple";
+
+const isSpinning = ref(false);
+
+const selectedColor = useState<SpinnerColor | null>(
+  "selectedColor",
+  () => null
+);
+
+const colors: SpinnerColor[] = ["blue", "yellow", "red", "purple"];
+
+//Selecting random color from the spinner
+
+const rotation = ref(0)
+const spinDuration = 2000
+
+const spin = () => {
+  if (isSpinning.value) return
+
+  isSpinning.value = true
+  selectedColor.value = null
+
+  const index = Math.floor(Math.random() * colors.length)
+  const color = colors[index]!
+
+  // Each slice is 90° wide. Its center is 45°, 135°, 225°, or 315°.
+  const sliceCenter = index * 90 + 45
+
+  // Rotate the chosen slice's center to the pointer at the top.
+  const targetAngle = (360 - sliceCenter) % 360
+  const currentAngle = rotation.value % 360
+  const extraDegrees = (targetAngle - currentAngle + 360) % 360
+
+  rotation.value += 4 * 360 + extraDegrees
+
+  setTimeout(() => {
+    selectedColor.value = color
+    isSpinning.value = false
+  }, spinDuration)
+};
+
+</script> -->
+                              
+<script setup lang="ts">
+  const route = useRoute()
+  const pin = route.query.pin // Reads the forwarded PIN
+  const players = ref([])
+
   const isSpinning = ref(false)
 
   const spin = () => {
@@ -25,24 +73,48 @@
   })
 </script>
 
-
-
 <template>
   <div class="game">
     <h1>Stronger Twister</h1>
 
     <div class="spin-card">
-      <div class="spin-text">Spin</div>
+      <div class="spin-text">
+        Spin
+      </div>
 
-      <div class="wheel" :class="{ spinning: isSpinning }" @click="spin"></div>
+      <div class="wheel-container">
+        <div class="pointer" aria-hidden="true"></div>
+
+        <button
+          type="button"
+          class="wheel"
+          aria-label="Spin the wheel"
+          :disabled="isSpinning"
+          :style="{
+            transform: `rotate(${rotation}deg)`,
+            transitionDuration: `${spinDuration}ms`
+          }"
+          @click="spin"
+        ></button>
+      </div>
     </div>
 
-    <button class="deck-button">Deck!</button>
+    <p v-if="selectedColor">
+      Selected color: {{ selectedColor }}
+    </p>
+
+    <button
+      class="deck-button"
+      :disabled="isSpinning || !selectedColor"
+      @click="navigateTo('/Cards')"
+    >
+      Deck!
+    </button>
   </div>
 </template>
 
 <style>
-  body {
+body {
     margin: 0;
     background-color: #f2f2f2;
     font-family: Arial, sans-serif;
@@ -85,12 +157,23 @@
     margin-bottom: 5px;
   }
 
-  /* Color wheel */
-  .wheel {
+/* Pointer */
+.wheel-container {
+    position: relative;
     width: 145px;
     height: 145px;
+}
 
+/* Color wheel */
+.wheel {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 1px solid black;
     border-radius: 50%;
+    cursor: pointer;
 
     background: conic-gradient(
       #4d9bf5 0deg 90deg,
@@ -98,11 +181,24 @@
       #e52e32 180deg 270deg,
       #7774d9 270deg 360deg
     );
+      transition-property: transform;
+    transition-timing-function: ease-out;
+}
+/* Pointer */
+.pointer {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    pointer-events: none;
 
-    border: 1px solid black;
-
-    cursor: pointer;
-  }
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 16px solid black;
+}
 
   /* spinning */
   .spinning {
@@ -119,8 +215,17 @@
     }
   }
 
-  /* Deck button */
-  .deck-button {
+/* Pointer */
+.wheel-container {
+    position: relative;
+    width: 145px;
+    height: 145px;
+    cursor: pointer;
+}
+
+
+/* Deck button */
+.deck-button {
     width: 210px;
     height: 115px;
 
@@ -137,5 +242,6 @@
 
   .deck-button:hover {
     background-color: #eeeeee;
-  }
+}
+
 </style>
