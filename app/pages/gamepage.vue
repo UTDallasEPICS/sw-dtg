@@ -1,4 +1,4 @@
-<script setup lang= "ts">
+<!-- <script setup lang= "ts">
 
 import { ref } from "vue";
 
@@ -43,6 +43,33 @@ const spin = () => {
   }, spinDuration)
 };
 
+</script> -->
+                              
+<script setup lang="ts">
+  import { ref, onMounted } from 'vue'
+  const route = useRoute()
+  const pin = route.query.pin // Reads the forwarded PIN
+  const players = ref([])
+
+  const isSpinning = ref(false)
+
+  const spin = () => {
+    isSpinning.value = true
+
+    setTimeout(() => {
+      isSpinning.value = false
+    }, 2000)
+  }
+
+  function usePinAndPlayers() {
+    //$socket.emit('Start_Game', { pin: pin })
+    // navigateTo('.. have info stuff')
+    console.log('Pin Name:', pin, 'Players:', players.value)
+  }
+
+  onMounted(() => {
+    usePinAndPlayers()
+  })
 </script>
 
 
