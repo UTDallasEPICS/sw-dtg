@@ -1,60 +1,178 @@
-<script setup lang="ts">
-  const route = useRoute()
-  const pin = route.query.pin // Reads the forwarded PIN
-  const players = ref([])
 
-  function usePinAndPlayers() {
-    //$socket.emit('Start_Game', { pin: pin })
-    // navigateTo('.. have info stuff')
-    console.log('Pin Name:', pin, 'Players:', players.value)
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import type { Socket } from 'socket.io-client'
+
+const route = useRoute()
+
+const pin = route.query.pin
+const roomPin = typeof pin === 'string' ? pin : pin?.[0]
+
+const players = ref<Player[]>([])
+const currentTurnIndex = ref(0)
+
+const isSpinning = ref(false)
+const selectedColor = ref<SpinnerColor | null>(null)
+
+const rotation = ref(0)
+const spinDuration = 2000
+
+type SpinnerColor = 'blue' | 'yellow' | 'red' | 'purple'
+
+interface Player {
+  id: string
+  name: string
+  cardsRead: number
+}
+
+// Get your existing Socket.IO client
+const socket = useNuxtApp().$socket as Socket
+
+// Find whose turn it is
+const currentPlayer = computed(() => {
+  return players.value[currentTurnIndex.value]
+})
+
+const isMyTurn = computed(() => {
+  return currentPlayer.value?.id === socket.id
+})
+
+// Colors in the same order as the wheel
+const colors: SpinnerColor[] = [
+  'blue',
+  'yellow',
+  'red',
+  'purple'
+]
+
+// Server tells us which color was selected
+function handleSpinResult(data: { color: SpinnerColor; player: string }) {
+  isSpinning.value = true
+  selectedColor.value = data.color
+
+  const index = colors.indexOf(data.color)
+
+  // Center of the selected slice
+  const sliceCenter = index * 90 + 45
+
+  // Move the selected slice to the pointer
+  const targetAngle = (360 - sliceCenter) % 360
+
+  const currentAngle = rotation.value % 360
+
+  const extraDegrees =
+    (targetAngle - currentAngle + 360) % 360
+
+  // Spin 4 full rotations plus the remaining angle
+  rotation.value += 4 * 360 + extraDegrees
+
+  setTimeout(() => {
+    isSpinning.value = false
+  }, spinDuration)
+}
+
+// Server updates whose turn it is
+function handleTurnUpdate(data: {
+  currentTurnIndex: number
+  activePlayer: Player
+}) {
+  currentTurnIndex.value = data.currentTurnIndex
+  selectedColor.value = null
+}
+
+// Game starts
+function handleGameStarted(data: {
+  players: Player[]
+  currentTurnIndex: number
+}) {
+  players.value = data.players
+  currentTurnIndex.value = data.currentTurnIndex
+}
+
+// Server rejects an action
+function handleSpinError(data: { message: string }) {
+  alert(data.message)
+}
+
+// Ask server to spin
+function spin() {
+  if (isSpinning.value) return
+
+  if (!isMyTurn.value) {
+    alert('It is not your turn!')
+    return
   }
 
-  onMounted(() => {
-    usePinAndPlayers()
+  if (selectedColor.value) {
+    alert('You have already spun this turn!')
+    return
+  }
+
+  socket.emit('SPIN_REQUEST', {
+    pin: roomPin
+  })
+}
+
+// End turn
+function endTurn() {
+  if (!isMyTurn.value) return
+
+  if (!selectedColor.value) {
+    alert('You must spin first!')
+    return
+  }
+
+  socket.emit('END_TURN', {
+    pin: roomPin
   })
 
-  type SpinnerColor = 'blue' | 'yellow' | 'red' | 'purple'
+  navigateTo('/Cards')
+}
 
-  const isSpinning = ref(false)
+onMounted(() => {
+  socket.on('SPIN_RESULT', handleSpinResult)
+  socket.on('TURN_UPDATE', handleTurnUpdate)
+  socket.on('GAME_STARTED', handleGameStarted)
+  socket.on('SPIN_ERROR', handleSpinError)
+  socket.on('GAME_STATE', handleGameState)
+    // Request the current game information
+  socket.emit('GET_GAME_STATE', {
+    pin: roomPin
+  })
 
-  const selectedColor = useState<SpinnerColor | null>('selectedColor', () => null)
+  //console.log('PIN:', roomPin)
+})
 
-  const colors: SpinnerColor[] = ['blue', 'yellow', 'red', 'purple']
+onUnmounted(() => {
+  socket.off('SPIN_RESULT', handleSpinResult)
+  socket.off('TURN_UPDATE', handleTurnUpdate)
+  socket.off('GAME_STARTED', handleGameStarted)
+  socket.off('SPIN_ERROR', handleSpinError)
+  socket.off('GAME_STATE', handleGameState)
 
-  //Selecting random color from the spinner
+})
 
-  const rotation = ref(0)
-  const spinDuration = 2000
-
-  const spin = () => {
-    if (isSpinning.value) return
-
-    isSpinning.value = true
-    selectedColor.value = null
-
-    const index = Math.floor(Math.random() * colors.length)
-    const color = colors[index]!
-
-    // Each slice is 90° wide. Its center is 45°, 135°, 225°, or 315°.
-    const sliceCenter = index * 90 + 45
-
-    // Rotate the chosen slice's center to the pointer at the top.
-    const targetAngle = (360 - sliceCenter) % 360
-    const currentAngle = rotation.value % 360
-    const extraDegrees = (targetAngle - currentAngle + 360) % 360
-
-    rotation.value += 4 * 360 + extraDegrees
-
-    setTimeout(() => {
-      selectedColor.value = color
-      isSpinning.value = false
-    }, spinDuration)
-  }
+function handleGameState(data: {
+  players: Player[]
+  currentTurnIndex: number
+}) {
+  players.value = data.players
+  currentTurnIndex.value = data.currentTurnIndex
+}
 </script>
 
 <template>
   <div class="game">
     <h1>Stronger Twister</h1>
+    
+    <h2 v-if="currentPlayer">
+      {{ currentPlayer.name }}&#39;s Turn
+    </h2>
+
+    <p v-if="!isMyTurn">
+      Waiting for the current player...
+    </p>
+
 
     <div class="spin-card">
       <div class="spin-text">Spin</div>
@@ -62,7 +180,7 @@
       <div class="wheel-container">
         <div class="pointer" aria-hidden="true"></div>
 
-        <button
+        <!-- <button
           type="button"
           class="wheel"
           aria-label="Spin the wheel"
@@ -72,11 +190,21 @@
             transitionDuration: `${spinDuration}ms`,
           }"
           @click="spin"
+        ></button> -->
+        <button
+          type="button"
+          class="wheel"
+          :disabled="!isMyTurn || isSpinning || selectedColor !== null"
+          :style="{
+            transform: `rotate(${rotation}deg)`,
+            transitionDuration: `${spinDuration}ms`
+          }"
+          @click="spin"
         ></button>
       </div>
     </div>
 
-    <p v-if="selectedColor">Selected color: {{ selectedColor }}</p>
+    <!-- <p v-if="selectedColor">Selected color: {{ selectedColor }}</p>
 
     <button
       class="deck-button"
@@ -84,9 +212,21 @@
       @click="navigateTo('/Cards')"
     >
       Deck!
+    </button> -->
+    <p v-if="selectedColor">
+      Selected color: {{ selectedColor }}
+    </p>
+
+    <button
+      class="deck-button"
+      :disabled="!isMyTurn || isSpinning || !selectedColor"
+      @click="endTurn"
+    >
+      Deck!
     </button>
   </div>
 </template>
+
 
 <style>
   body {
@@ -159,6 +299,11 @@
     transition-property: transform;
     transition-timing-function: ease-out;
   }
+  /* disabled state for the wheel */
+  .wheel:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
   /* Pointer */
   .pointer {
     position: absolute;
@@ -175,7 +320,7 @@
     border-top: 16px solid black;
   }
 
-  /* spinning */
+  /* spinning
   .spinning {
     animation: spin 2s ease-out;
   }
@@ -188,7 +333,7 @@
     to {
       transform: rotate(1440deg);
     }
-  }
+  } */
 
   /* Pointer */
   .wheel-container {

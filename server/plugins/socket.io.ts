@@ -108,6 +108,8 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
         room.status = 'PLAYING'
         room.currentPlayer = 0
+        room.hasSpunThisTurn = false
+        room.isSpinning = false
 
         // Broadcast to ALL sockets in the room (host AND all students)
         io.to(pin).emit('GAME_STARTED', {
@@ -116,6 +118,76 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
           currentTurnIndex: room.currentPlayer,
           activePlayer: room.players[0],
         })
+      })
+      
+      // 4. Player requests to spin
+      socket.on('SPIN_REQUEST', ({ pin }) => {
+        const room = activeRooms.get(pin)
+
+        // Check if room exists
+        if (!room) {
+          socket.emit('SPIN_ERROR', {
+            message: 'Room not found.'
+          })
+          return
+        }
+
+        // Check if game has started
+        if (room.status !== 'PLAYING') {
+          socket.emit('SPIN_ERROR', {
+            message: 'The game has not started.'
+          })
+          return
+        }
+
+        // Find which player sent the request
+        const playerIndex = room.players.findIndex(
+          (player) => player.id === socket.id
+        )
+
+        // Check if the socket belongs to a player
+        if (playerIndex === -1) {
+          socket.emit('SPIN_ERROR', {
+            message: 'You are not a player in this game.'
+          })
+          return
+        }
+
+        // Check whose turn it is
+        if (playerIndex !== room.currentPlayer) {
+          socket.emit('SPIN_ERROR', {
+            message: 'It is not your turn!'
+          })
+          return
+        }
+
+        // Prevent multiple spins
+        if (room.hasSpunThisTurn || room.isSpinning) {
+          socket.emit('SPIN_ERROR', {
+            message: 'You have already spun this turn.'
+          })
+          return
+        }
+
+        // Lock the spin
+        room.isSpinning = true
+        room.hasSpunThisTurn = true
+
+        // Choose a random color on the SERVER
+        const colors = ['blue', 'yellow', 'red', 'purple'] as const
+
+        const color = colors[Math.floor(Math.random() * colors.length)]!
+
+        // Send the result to everyone in the room
+        io.to(pin).emit('SPIN_RESULT', {
+          color,
+          player: room.players[playerIndex]!.name
+        })
+
+        // Unlock after 2 seconds
+        setTimeout(() => {
+          room.isSpinning = false
+        }, 2000)
       })
 
       // 4. Socket disconnection cleanup
@@ -129,6 +201,71 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
           }
         }
       })
+
+      // 5. Player ends their turn
+      socket.on('END_TURN', ({ pin }) => {
+        const room = activeRooms.get(pin)
+
+        if (!room || room.status !== 'PLAYING') {
+          return
+        }
+
+        const playerIndex = room.players.findIndex(
+          (player) => player.id === socket.id
+        )
+
+        // Only the current player can end their turn
+        if (playerIndex !== room.currentPlayer) {
+          socket.emit('ERROR', {
+            message: 'It is not your turn.'
+          })
+          return
+        }
+
+        // They must have spun first
+        if (!room.hasSpunThisTurn || room.isSpinning) {
+          socket.emit('ERROR', {
+            message: 'You must spin before ending your turn.'
+          })
+          return
+        }
+
+        // Move to the next player
+        room.currentPlayer =
+          (room.currentPlayer! + 1) % room.players.length
+
+        room.hasSpunThisTurn = false
+        room.isSpinning = false
+
+        // Tell everyone whose turn it is now
+        io.to(pin).emit('TURN_UPDATE', {
+          currentTurnIndex: room.currentPlayer,
+          activePlayer: room.players[room.currentPlayer]
+        })
+      })
+
+      socket.on('GET_GAME_STATE', ({ pin }) => {
+        const room = activeRooms.get(pin)
+
+        if (!room) {
+          socket.emit('ERROR', {
+            message: 'Room not found.'
+          })
+          return
+        }
+
+        socket.join(pin)
+
+        socket.emit('GAME_STATE', {
+          pin,
+          players: room.players,
+          currentTurnIndex: room.currentPlayer ?? 0,
+          status: room.status
+        })
+      })
     })
   })
+
+
 })
+
