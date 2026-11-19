@@ -193,11 +193,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
       // 4. Socket disconnection cleanup
       socket.on('disconnect', () => {
         for (const [pin, room] of activeRooms.entries()) {
-          const index = room.players.findIndex((p) => p.id === socket.id)
-          if (index !== -1) {
-            room.players.splice(index, 1)
-            io.to(pin).emit('ROSTER_UPDATE', room.players)
-            break
+          // If in lobby, remove player from list
+          if (room.status === 'LOBBY') {
+            const index = room.players.findIndex((p) => p.id === socket.id)
+            if (index !== -1) {
+              room.players.splice(index, 1)
+              io.to(pin).emit('ROSTER_UPDATE', room.players)
+              break
+            }
           }
         }
       })
@@ -214,16 +217,18 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
           (player) => player.id === socket.id
         )
 
-        // Only the current player can end their turn
-        if (playerIndex !== room.currentPlayer) {
+        const isHost = room.hostSocketId === socket.id
+
+        // Allow active player or host to end turn
+        if (!isHost && playerIndex !== room.currentPlayer) {
           socket.emit('ERROR', {
             message: 'It is not your turn.'
           })
           return
         }
 
-        // They must have spun first
-        if (!room.hasSpunThisTurn || room.isSpinning) {
+        // They must have spun first (host can bypass if player is unresponsive)
+        if (!isHost && (!room.hasSpunThisTurn || room.isSpinning)) {
           socket.emit('ERROR', {
             message: 'You must spin before ending your turn.'
           })
@@ -232,7 +237,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
         // Move to the next player
         room.currentPlayer =
-          (room.currentPlayer! + 1) % room.players.length
+          ((room.currentPlayer ?? 0) + 1) % room.players.length
 
         room.hasSpunThisTurn = false
         room.isSpinning = false
@@ -244,7 +249,30 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         })
       })
 
-      socket.on('GET_GAME_STATE', ({ pin }) => {
+      socket.on('RECONNECT_PLAYER', ({ pin, name }: { pin: string; name?: string }) => {
+        const room = activeRooms.get(pin)
+        if (!room) return
+
+        socket.join(pin)
+
+        if (name) {
+          const player = room.players.find(
+            (p) => p.name.toLowerCase() === name.trim().toLowerCase()
+          )
+          if (player) {
+            player.id = socket.id
+          }
+        }
+
+        socket.emit('GAME_STATE', {
+          pin,
+          players: room.players,
+          currentTurnIndex: room.currentPlayer ?? 0,
+          status: room.status
+        })
+      })
+
+      socket.on('GET_GAME_STATE', ({ pin, name }: { pin: string; name?: string }) => {
         const room = activeRooms.get(pin)
 
         if (!room) {
@@ -255,6 +283,15 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         }
 
         socket.join(pin)
+
+        if (name) {
+          const player = room.players.find(
+            (p) => p.name.toLowerCase() === name.trim().toLowerCase()
+          )
+          if (player) {
+            player.id = socket.id
+          }
+        }
 
         socket.emit('GAME_STATE', {
           pin,

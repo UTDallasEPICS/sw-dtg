@@ -43,7 +43,10 @@
     isFlipped.value = false
     return navigateTo({
       path: '/gamepage',
-      query: { pin: route.query.pin },
+      query: {
+        pin: route.query.pin,
+        ...(route.query.name ? { name: route.query.name } : {}),
+      },
     })
   }
 

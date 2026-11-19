@@ -46,7 +46,14 @@
 
     // Navigate to active game when teacher starts session
     $socket.on('GAME_STARTED', () => {
-      navigateTo(`/gamepage?pin=${pin.value}`)
+      sessionStorage.setItem(`player_name_${pin.value}`, nickname.value)
+      navigateTo({
+        path: '/gamepage',
+        query: {
+          pin: pin.value,
+          name: nickname.value,
+        },
+      })
     })
   })
 

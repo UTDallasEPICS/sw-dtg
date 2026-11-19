@@ -4,10 +4,18 @@
 
   const route = useRoute()
 
-  const cardClicked = ref(false)
+  const cardClicked = useState<boolean>('cardClicked', () => false)
 
   const pin = route.query.pin
   const roomPin = typeof pin === 'string' ? pin : pin?.[0]
+  const playerName = computed(() => {
+    const qName = route.query.name
+    if (typeof qName === 'string' && qName) return qName
+    if (roomPin && typeof window !== 'undefined') {
+      return sessionStorage.getItem(`player_name_${roomPin}`) || ''
+    }
+    return ''
+  })
 
   const players = ref<Player[]>([])
   const currentTurnIndex = ref(0)
@@ -35,7 +43,13 @@
   })
 
   const isMyTurn = computed(() => {
-    return currentPlayer.value?.id === socket.id
+    if (!currentPlayer.value) return false
+    // Match by socket id or by student name
+    return (
+      currentPlayer.value.id === socket.id ||
+      (!!playerName.value &&
+        currentPlayer.value.name.toLowerCase() === playerName.value.toLowerCase())
+    )
   })
 
   // Colors in the same order as the wheel
@@ -70,7 +84,10 @@
     cardClicked.value = true
     navigateTo({
       path: '/Cards',
-      query: { pin: roomPin },
+      query: {
+        pin: roomPin,
+        ...(playerName.value ? { name: playerName.value } : {}),
+      },
     })
   }
 
@@ -78,16 +95,23 @@
   function handleTurnUpdate(data: { currentTurnIndex: number; activePlayer: Player }) {
     currentTurnIndex.value = data.currentTurnIndex
     selectedColor.value = null
-  } //here?
+    cardClicked.value = false
+  }
 
   // Game starts
   function handleGameStarted(data: { players: Player[]; currentTurnIndex: number }) {
     players.value = data.players
     currentTurnIndex.value = data.currentTurnIndex
+    selectedColor.value = null
+    cardClicked.value = false
   }
 
   // Server rejects an action
   function handleSpinError(data: { message: string }) {
+    alert(data.message)
+  }
+
+  function handleGenericError(data: { message: string }) {
     alert(data.message)
   }
 
@@ -124,18 +148,24 @@
     })
   }
 
+  function syncGameState() {
+    socket.emit('GET_GAME_STATE', {
+      pin: roomPin,
+      name: playerName.value,
+    })
+  }
+
   onMounted(() => {
     socket.on('SPIN_RESULT', handleSpinResult)
     socket.on('TURN_UPDATE', handleTurnUpdate)
     socket.on('GAME_STARTED', handleGameStarted)
     socket.on('SPIN_ERROR', handleSpinError)
+    socket.on('ERROR', handleGenericError)
     socket.on('GAME_STATE', handleGameState)
-    // Request the current game information
-    socket.emit('GET_GAME_STATE', {
-      pin: roomPin,
-    })
+    socket.on('connect', syncGameState)
 
-    //console.log('PIN:', roomPin)
+    // Request the current game information and attach player identity
+    syncGameState()
   })
 
   onUnmounted(() => {
@@ -143,7 +173,9 @@
     socket.off('TURN_UPDATE', handleTurnUpdate)
     socket.off('GAME_STARTED', handleGameStarted)
     socket.off('SPIN_ERROR', handleSpinError)
+    socket.off('ERROR', handleGenericError)
     socket.off('GAME_STATE', handleGameState)
+    socket.off('connect', syncGameState)
   })
 
   function handleGameState(data: { players: Player[]; currentTurnIndex: number }) {
