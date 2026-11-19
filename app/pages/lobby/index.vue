@@ -21,6 +21,7 @@
     if (!pin.value) return
     $socket.emit('START_GAME', { pin: pin.value })
   }
+  //Talks to socket.io.ts
 
   onMounted(() => {
     // If no PIN was forwarded via query string, redirect back to session setup

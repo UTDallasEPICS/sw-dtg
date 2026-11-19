@@ -1,178 +1,164 @@
-
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import type { Socket } from 'socket.io-client'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import type { Socket } from 'socket.io-client'
 
-const route = useRoute()
+  const route = useRoute()
 
-const pin = route.query.pin
-const roomPin = typeof pin === 'string' ? pin : pin?.[0]
+  const cardClicked = ref(false)
 
-const players = ref<Player[]>([])
-const currentTurnIndex = ref(0)
+  const pin = route.query.pin
+  const roomPin = typeof pin === 'string' ? pin : pin?.[0]
 
-const isSpinning = ref(false)
-const selectedColor = ref<SpinnerColor | null>(null)
+  const players = ref<Player[]>([])
+  const currentTurnIndex = ref(0)
 
-const rotation = ref(0)
-const spinDuration = 2000
+  const isSpinning = ref(false)
+  const selectedColor = useState<SpinnerColor | null>('selectedColor', () => null)
 
-type SpinnerColor = 'blue' | 'yellow' | 'red' | 'purple'
+  const rotation = ref(0)
+  const spinDuration = 2000
 
-interface Player {
-  id: string
-  name: string
-  cardsRead: number
-}
+  type SpinnerColor = 'blue' | 'yellow' | 'red' | 'purple'
 
-// Get your existing Socket.IO client
-const socket = useNuxtApp().$socket as Socket
-
-// Find whose turn it is
-const currentPlayer = computed(() => {
-  return players.value[currentTurnIndex.value]
-})
-
-const isMyTurn = computed(() => {
-  return currentPlayer.value?.id === socket.id
-})
-
-// Colors in the same order as the wheel
-const colors: SpinnerColor[] = [
-  'blue',
-  'yellow',
-  'red',
-  'purple'
-]
-
-// Server tells us which color was selected
-function handleSpinResult(data: { color: SpinnerColor; player: string }) {
-  isSpinning.value = true
-  selectedColor.value = data.color
-
-  const index = colors.indexOf(data.color)
-
-  // Center of the selected slice
-  const sliceCenter = index * 90 + 45
-
-  // Move the selected slice to the pointer
-  const targetAngle = (360 - sliceCenter) % 360
-
-  const currentAngle = rotation.value % 360
-
-  const extraDegrees =
-    (targetAngle - currentAngle + 360) % 360
-
-  // Spin 4 full rotations plus the remaining angle
-  rotation.value += 4 * 360 + extraDegrees
-
-  setTimeout(() => {
-    isSpinning.value = false
-  }, spinDuration)
-}
-
-// Server updates whose turn it is
-function handleTurnUpdate(data: {
-  currentTurnIndex: number
-  activePlayer: Player
-}) {
-  currentTurnIndex.value = data.currentTurnIndex
-  selectedColor.value = null
-}
-
-// Game starts
-function handleGameStarted(data: {
-  players: Player[]
-  currentTurnIndex: number
-}) {
-  players.value = data.players
-  currentTurnIndex.value = data.currentTurnIndex
-}
-
-// Server rejects an action
-function handleSpinError(data: { message: string }) {
-  alert(data.message)
-}
-
-// Ask server to spin
-function spin() {
-  if (isSpinning.value) return
-
-  if (!isMyTurn.value) {
-    alert('It is not your turn!')
-    return
+  interface Player {
+    id: string
+    name: string
+    cardsRead: number
   }
 
-  if (selectedColor.value) {
-    alert('You have already spun this turn!')
-    return
-  }
+  // Get your existing Socket.IO client
+  const socket = useNuxtApp().$socket as Socket
 
-  socket.emit('SPIN_REQUEST', {
-    pin: roomPin
-  })
-}
-
-// End turn
-function endTurn() {
-  if (!isMyTurn.value) return
-
-  if (!selectedColor.value) {
-    alert('You must spin first!')
-    return
-  }
-
-  socket.emit('END_TURN', {
-    pin: roomPin
+  // Find whose turn it is
+  const currentPlayer = computed(() => {
+    return players.value[currentTurnIndex.value]
   })
 
-  navigateTo('/Cards')
-}
+  const isMyTurn = computed(() => {
+    return currentPlayer.value?.id === socket.id
+  })
 
-onMounted(() => {
-  socket.on('SPIN_RESULT', handleSpinResult)
-  socket.on('TURN_UPDATE', handleTurnUpdate)
-  socket.on('GAME_STARTED', handleGameStarted)
-  socket.on('SPIN_ERROR', handleSpinError)
-  socket.on('GAME_STATE', handleGameState)
+  // Colors in the same order as the wheel
+  const colors: SpinnerColor[] = ['blue', 'yellow', 'red', 'purple']
+
+  // Server tells us which color was selected
+  function handleSpinResult(data: { color: SpinnerColor; player: string }) {
+    isSpinning.value = true
+    selectedColor.value = data.color
+
+    const index = colors.indexOf(data.color)
+
+    // Center of the selected slice
+    const sliceCenter = index * 90 + 45
+
+    // Move the selected slice to the pointer
+    const targetAngle = (360 - sliceCenter) % 360
+
+    const currentAngle = rotation.value % 360
+
+    const extraDegrees = (targetAngle - currentAngle + 360) % 360
+
+    // Spin 4 full rotations plus the remaining angle
+    rotation.value += 4 * 360 + extraDegrees
+
+    setTimeout(() => {
+      isSpinning.value = false
+    }, spinDuration)
+  }
+
+  function handleDeckClick() {
+    cardClicked.value = true
+    navigateTo({
+      path: '/Cards',
+      query: { pin: roomPin },
+    })
+  }
+
+  // Server updates whose turn it is
+  function handleTurnUpdate(data: { currentTurnIndex: number; activePlayer: Player }) {
+    currentTurnIndex.value = data.currentTurnIndex
+    selectedColor.value = null
+  } //here?
+
+  // Game starts
+  function handleGameStarted(data: { players: Player[]; currentTurnIndex: number }) {
+    players.value = data.players
+    currentTurnIndex.value = data.currentTurnIndex
+  }
+
+  // Server rejects an action
+  function handleSpinError(data: { message: string }) {
+    alert(data.message)
+  }
+
+  // Ask server to spin
+  function spin() {
+    if (isSpinning.value) return
+
+    if (!isMyTurn.value) {
+      alert('It is not your turn!')
+      return
+    }
+
+    if (selectedColor.value) {
+      alert('You have already spun this turn!')
+      return
+    }
+
+    socket.emit('SPIN_REQUEST', {
+      pin: roomPin,
+    })
+  }
+
+  // End turn
+  function endTurn() {
+    if (!isMyTurn.value) return
+
+    if (!selectedColor.value) {
+      alert('You must spin first!')
+      return
+    }
+
+    socket.emit('END_TURN', {
+      pin: roomPin,
+    })
+  }
+
+  onMounted(() => {
+    socket.on('SPIN_RESULT', handleSpinResult)
+    socket.on('TURN_UPDATE', handleTurnUpdate)
+    socket.on('GAME_STARTED', handleGameStarted)
+    socket.on('SPIN_ERROR', handleSpinError)
+    socket.on('GAME_STATE', handleGameState)
     // Request the current game information
-  socket.emit('GET_GAME_STATE', {
-    pin: roomPin
+    socket.emit('GET_GAME_STATE', {
+      pin: roomPin,
+    })
+
+    //console.log('PIN:', roomPin)
   })
 
-  //console.log('PIN:', roomPin)
-})
+  onUnmounted(() => {
+    socket.off('SPIN_RESULT', handleSpinResult)
+    socket.off('TURN_UPDATE', handleTurnUpdate)
+    socket.off('GAME_STARTED', handleGameStarted)
+    socket.off('SPIN_ERROR', handleSpinError)
+    socket.off('GAME_STATE', handleGameState)
+  })
 
-onUnmounted(() => {
-  socket.off('SPIN_RESULT', handleSpinResult)
-  socket.off('TURN_UPDATE', handleTurnUpdate)
-  socket.off('GAME_STARTED', handleGameStarted)
-  socket.off('SPIN_ERROR', handleSpinError)
-  socket.off('GAME_STATE', handleGameState)
-
-})
-
-function handleGameState(data: {
-  players: Player[]
-  currentTurnIndex: number
-}) {
-  players.value = data.players
-  currentTurnIndex.value = data.currentTurnIndex
-}
+  function handleGameState(data: { players: Player[]; currentTurnIndex: number }) {
+    players.value = data.players
+    currentTurnIndex.value = data.currentTurnIndex
+  }
 </script>
 
 <template>
   <div class="game">
     <h1>Stronger Twister</h1>
-    
-    <h2 v-if="currentPlayer">
-      {{ currentPlayer.name }}&#39;s Turn
-    </h2>
 
-    <p v-if="!isMyTurn">
-      Waiting for the current player...
-    </p>
+    <h2 v-if="currentPlayer">{{ currentPlayer.name }}&#39;s Turn</h2>
 
+    <p v-if="!isMyTurn">Waiting for the current player...</p>
 
     <div class="spin-card">
       <div class="spin-text">Spin</div>
@@ -197,7 +183,7 @@ function handleGameState(data: {
           :disabled="!isMyTurn || isSpinning || selectedColor !== null"
           :style="{
             transform: `rotate(${rotation}deg)`,
-            transitionDuration: `${spinDuration}ms`
+            transitionDuration: `${spinDuration}ms`,
           }"
           @click="spin"
         ></button>
@@ -213,20 +199,27 @@ function handleGameState(data: {
     >
       Deck!
     </button> -->
-    <p v-if="selectedColor">
-      Selected color: {{ selectedColor }}
-    </p>
+    <p v-if="selectedColor">Selected color is: {{ selectedColor }}</p>
 
     <button
+      v-if="!cardClicked"
+      class="deck-button"
+      :disabled="!isMyTurn || isSpinning || !selectedColor"
+      @click="handleDeckClick"
+    >
+      Deck!
+    </button>
+
+    <button
+      v-else
       class="deck-button"
       :disabled="!isMyTurn || isSpinning || !selectedColor"
       @click="endTurn"
     >
-      Deck!
+      End Turn!
     </button>
   </div>
 </template>
-
 
 <style>
   body {
@@ -301,9 +294,9 @@ function handleGameState(data: {
   }
   /* disabled state for the wheel */
   .wheel:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
   /* Pointer */
   .pointer {
     position: absolute;
